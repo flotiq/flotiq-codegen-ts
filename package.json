@@ -1,6 +1,6 @@
 {
   "name": "flotiq-codegen-ts",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "CLI tool to generate API clients using Flotiq API and OpenAPI Generator",
   "main": "index.js",
   "bin": {

@@ -17,9 +17,6 @@
 	    "apiNamePrefix":""
 	},
 	"removeOperationIdPrefix": true,
-        "operationIdNameMappings":{
-		"ContentBlogPost": "BlogPost"
-	},
     	"templateDir": "templates"
         }
     }
