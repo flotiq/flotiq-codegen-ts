@@ -1,0 +1,27 @@
+{
+  "$schema": "./node_modules/@openapitools/openapi-generator-cli/config.schema.json",
+  "spaces": 2,
+  "generator-cli": {
+    "version": "7.4.0",
+    "useDocker": true,
+    "generators":{
+	"v3": {
+          "generatorName": "typescript-fetch",
+        "output": "#{cwd}/flotiqApi/",
+        "glob": "schema.json",
+        "additionalProperties":{
+    	    "modelPropertyNaming": "original",
+    	    "paramNaming": "original",
+            "npmName": "FlotiqApi",
+	    "apiNameSuffix":"",
+	    "apiNamePrefix":""
+	},
+	"removeOperationIdPrefix": true,
+        "operationIdNameMappings":{
+		"ContentBlogPost": "BlogPost"
+	},
+    	"templateDir": "templates"
+        }
+    }
+  }
+}

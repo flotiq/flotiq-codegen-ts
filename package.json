@@ -1,0 +1,24 @@
+{
+  "name": "flotiq-codegen-ts",
+  "version": "1.0.0",
+  "description": "CLI tool to generate API clients using Flotiq API and OpenAPI Generator",
+  "main": "index.js",
+  "bin": {
+    "flotiq-codegen-ts": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "flotiq",
+    "codegen",
+    "openapi-generator"
+  ],
+  "author": "Your Name",
+  "license": "ISC",
+  "dependencies": {
+    "@openapitools/openapi-generator-cli": "^2.13.1",
+    "axios": "^1.6.8",
+    "inquirer": "^8.2.0"
+  }
+}
