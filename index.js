@@ -18,7 +18,7 @@ async function modifySchema(schema) {
 }
 
 async function saveSchemaToFile(schema, filename) {
-    const filePath = path.resolve(process.cwd(), filename);
+    const filePath = path.join(__dirname, filename);
     fs.writeFileSync(filePath, schema);
     return filePath;
 }
@@ -41,14 +41,18 @@ async function main() {
         const schema = await downloadSchema(schemaUrl);
         const modifiedSchema = await modifySchema(schema);
         const schemaFile = await saveSchemaToFile(modifiedSchema, 'schema.json');
-
+        // Correctly resolving the path to cfg.json
+        const configPath = path.join(__dirname, 'cfg.json');
+        const outputPath = path.join(process.cwd(), 'flotiqApi');
         // Generate command
         // const command = `openapi-generator-cli generate -i ${schemaFile} -g typescript-fetch --additional-properties=apiKey=${apiKey} -o ./generated-api`;
-        const genCommand = `npx openapi-generator-cli --openapitools cfg.json generate`
-    
-        console.log('Generating client from schema...');
-        execSync(genCommand, { stdio: 'ignore' });
+        const genCommand = `openapi-generator-cli --openapitools ${configPath} generate`
+        const mvCommand = `mv ${__dirname}/flotiqApi ${outputPath}`;
 
+        console.log('Generating client from schema...');
+        execSync(genCommand, { stdio: 'ignore', cwd: __dirname});
+        execSync(mvCommand, { stdio: 'ignore', cwd: __dirname});
+        
         console.log('Client generated successfully!');
     } catch (error) {
         console.error('An error occurred:', error);
