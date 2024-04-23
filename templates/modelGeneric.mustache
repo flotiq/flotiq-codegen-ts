@@ -8,7 +8,9 @@ import {
     {{.}}ToJSON,
 } from './{{.}}{{importFileExtension}}';
 {{/imports}}
-//import { DataSource, DataSourceFromJSON } from './DataSource';
+
+import { DataSource, DataSourceFromJSON } from './DataSource';
+
 {{/hasImports}}
 {{#discriminator}}
 import {
