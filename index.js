@@ -48,10 +48,12 @@ async function main() {
         // const command = `openapi-generator-cli generate -i ${schemaFile} -g typescript-fetch --additional-properties=apiKey=${apiKey} -o ./generated-api`;
         const genCommand = `openapi-generator-cli --openapitools ${configPath} generate`
         const mvCommand = `mv ${__dirname}/flotiqApi ${outputPath}`;
+        const cleanCommand = `${__dirname}/clean_duplicate_import.sh`;
 
         console.log('Generating client from schema...');
         execSync(genCommand, { stdio: 'ignore', cwd: __dirname});
         execSync(mvCommand, { stdio: 'ignore', cwd: __dirname});
+        execSync(cleanCommand, { stdio: 'ignore', cwd: $outputPath});
         
         console.log('Client generated successfully!');
     } catch (error) {

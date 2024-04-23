@@ -13,7 +13,7 @@
     	    "modelPropertyNaming": "original",
     	    "paramNaming": "original",
             "npmName": "FlotiqApi",
-	    "apiNameSuffix":"",
+	    "apiNameSuffix":"API",
 	    "apiNamePrefix":"",
 	    "prefixParameterInterfaces": true
 	},
