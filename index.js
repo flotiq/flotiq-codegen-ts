@@ -53,7 +53,7 @@ async function main() {
         console.log('Generating client from schema...');
         execSync(genCommand, { stdio: 'ignore', cwd: __dirname});
         execSync(mvCommand, { stdio: 'ignore', cwd: __dirname});
-        execSync(cleanCommand, { stdio: 'ignore', cwd: $outputPath});
+        execSync(cleanCommand, { stdio: 'ignore', cwd: outputPath});
         
         console.log('Client generated successfully!');
     } catch (error) {
