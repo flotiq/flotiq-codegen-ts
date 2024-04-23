@@ -40,8 +40,7 @@ To generate a set of `d.ts` files for Typescript follow these steps:
 
 1. Execute `npx flotiq-codegen-ts generate` as usual
 2. Go to `./flotiqApi` directory
-3. Execute `../clean_duplicate_import.sh`
-4. Execute `npm run build`
+3. Execute `npm run build`
 
 This will render the declarations in the `flotiqApi/dist` folder.
 
