@@ -14,7 +14,8 @@
     	    "paramNaming": "original",
             "npmName": "FlotiqApi",
 	    "apiNameSuffix":"",
-	    "apiNamePrefix":""
+	    "apiNamePrefix":"",
+	    "prefixParameterInterfaces": true
 	},
 	"removeOperationIdPrefix": true,
     	"templateDir": "templates"
