@@ -46,6 +46,14 @@ To generate a set of `d.ts` files for Typescript follow these steps:
 
 This will render the declarations in the `flotiqApi/dist` folder.
 
+## Developing
+
+To start developing this project, follow these steps:
+
+1. Clone the repository `git clone git@github.com:flotiq/flotiq-codegen-ts.git` 
+2. Install dependencies `yarn install`
+3. Run the project `yarn start`
+
 ## Collaborating
 
 If you wish to talk with us about this project, feel free to hop on our [![Discord Chat](https://img.shields.io/discord/682699728454025410.svg)](https://discord.gg/FwXcHnX).
