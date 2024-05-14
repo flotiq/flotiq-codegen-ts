@@ -18,14 +18,16 @@ async function modifySchema(schema) {
     return schema1.replace(/Content: /g, '');
 }
 
-async function saveSchemaToFile(schema, filename) {2
+async function saveSchemaToFile(schema, filename) {
     const filePath = path.join(__dirname, filename);
     fs.writeFileSync(filePath, schema);
     return filePath;
 }
 
-const getMoveCommand = (outputPath) => {
-    const command = `mv ${__dirname}/flotiqApi ${outputPath}`;
+const getMoveCommand = (outputPath, buildToJs = false) => {
+    const path = buildToJs ? 'flotiqApiBuildJs' : 'flotiqApi';
+    const command = `mv ${__dirname}/${path} ${outputPath}`;
+
     execSync(command, {stdio: 'ignore', cwd: __dirname});
 }
 
@@ -58,7 +60,6 @@ async function main() {
         // Correctly resolving the path to cfg.json
         const configPath = path.join(__dirname, 'cfg.json');
         const outputPath = path.join(process.cwd(), 'flotiqApi');
-        const outputJsPath = path.join(process.cwd(), 'flotiqApiBuildJs');
 
         // Generate command
         // const command = `openapi-generator-cli generate -i ${schemaFile} -g typescript-fetch --additional-properties=apiKey=${apiKey} -o ./generated-api`;
@@ -72,11 +73,10 @@ async function main() {
         if (compileToJs) {
             getCleanUpCommand(compileToJs);
             execSync(buildJsCommand, {stdio: 'ignore', cwd: __dirname});
-            getMoveCommand(outputJsPath);
+            getMoveCommand(outputPath, true);
         } else {
-            getCleanUpCommand(false, outputPath);
+            getCleanUpCommand(compileToJs, outputPath);
             getMoveCommand(outputPath);
-
         }
 
         console.log('Client generated successfully!');
