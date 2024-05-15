@@ -8,7 +8,7 @@ const yargs = require('yargs');
 
 const compileToJsFlag = "compile-js";
 
-const argv = yargs()
+const argv = yargs(process.argv)
     .command("flotiq-codegen-ts generate [options]", "Generate api integration for your Flotiq project", {})
     .usage("Use flotiq-codegen-ts generates typescript Fetch API integration for your Flotiq project.")
     .option(compileToJsFlag, {
@@ -89,8 +89,8 @@ async function main() {
             execSync(buildJsCommand, {stdio: 'ignore', cwd: __dirname});
             getMoveCommand(outputPath, true);
         } else {
-            getCleanUpCommand(compileToJs, outputPath);
             getMoveCommand(outputPath);
+            getCleanUpCommand(compileToJs, outputPath);
         }
 
         console.log('Client generated successfully!');
