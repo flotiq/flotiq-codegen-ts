@@ -4,7 +4,21 @@ const {execSync} = require('child_process');
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
-const args = process.argv.slice(2);
+const yargs = require('yargs');
+
+const compileToJsFlag = "compile-js";
+
+const argv = yargs()
+    .command("flotiq-codegen-ts generate [options]", "Generate api integration for your Flotiq project", {})
+    .usage("Use flotiq-codegen-ts generates typescript Fetch API integration for your Flotiq project.")
+    .option(compileToJsFlag, {
+        description: "generates Fetch API integration compiled to JS",
+        alias: "",
+        type: "boolean",
+        default: false,
+        demandOption: false,
+    }).help().alias("help", "h").argv;
+
 
 async function downloadSchema(url) {
     const response = await axios.get(url);
@@ -50,7 +64,7 @@ async function main() {
 
     const {apiKey} = answers;
     const schemaUrl = `https://api.flotiq.com/api/v1/open-api-schema.json?user_only=1&hydrate=1&auth_token=${apiKey}`;
-    const compileToJs = args.includes('--js');
+    const compileToJs = argv[compileToJsFlag];
 
     try {
         console.log('Downloading OpenAPI schema...');
