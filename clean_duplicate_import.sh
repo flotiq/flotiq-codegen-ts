@@ -17,6 +17,5 @@ escaped_delete_line=$(printf '%s\n' "$delete_line" | sed 's:[][\/.^$*]:\\&:g')
 for file in $file_patterns; do
   if grep -Fq "$delete_line" "$file"; then
     sed -i '' "/$escaped_delete_line/d" "$file"
-    rm "${file}.old"
   fi
 done
