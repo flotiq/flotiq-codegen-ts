@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const yargs = require('yargs');
 
-const compileToJsFlag = "compile-js";
+const compileToJsFlag = "compiled-js";
 
 const argv = yargs(process.argv)
     .command("flotiq-codegen-ts generate [options]", "Generate api integration for your Flotiq project", {})
@@ -40,8 +40,10 @@ async function saveSchemaToFile(schema, filename) {
 
 const getMoveCommand = (outputPath, buildToJs = false) => {
     const path = buildToJs ? 'flotiqApiBuildJs' : 'flotiqApi';
+    const clearDestination = `rm -fr ${outputPath}`;
     const command = `mv ${__dirname}/${path} ${outputPath}`;
 
+    execSync(clearDestination, {stdio: 'ignore', cwd: __dirname});
     execSync(command, {stdio: 'ignore', cwd: __dirname});
 }
 
@@ -78,13 +80,15 @@ async function main() {
         // Generate command
         // const command = `openapi-generator-cli generate -i ${schemaFile} -g typescript-fetch --additional-properties=apiKey=${apiKey} -o ./generated-api`;
         const genCommand = `openapi-generator-cli --openapitools ${configPath} generate`;
-        const buildJsCommand = `sh build_js_app.sh`;
+
+        // compile api to js command
+        const buildJsCommand = `sh build_to_js.sh`;
 
         console.log('Generating client from schema...');
-
         execSync(genCommand, {stdio: 'ignore', cwd: __dirname});
 
         if (compileToJs) {
+            console.log('Compiling to javascript...');
             getCleanUpCommand(compileToJs);
             execSync(buildJsCommand, {stdio: 'ignore', cwd: __dirname});
             getMoveCommand(outputPath, true);
@@ -96,7 +100,6 @@ async function main() {
         console.log('Client generated successfully!');
     } catch (error) {
         console.error('An error occurred:', error, error.stdio);
-
         process.exit(1);
     }
 }
