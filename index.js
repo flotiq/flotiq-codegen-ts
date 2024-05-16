@@ -47,11 +47,10 @@ const getMoveCommand = (outputPath, buildToJs = false) => {
     execSync(command, {stdio: 'ignore', cwd: __dirname});
 }
 
-const getCleanUpCommand = (compileToJs, outputPath = '') => {
-    const cleanCommand = compileToJs ? `sh clean_duplicate_import.sh --js` :
-        `${__dirname}/clean_duplicate_import.sh`;
+const getCleanUpCommand = (outputPath = null) => {
+    const cleanCommand = `${__dirname}/clean_duplicate_import.sh`;
 
-    execSync(cleanCommand, {stdio: 'ignore', cwd: compileToJs ? __dirname : outputPath});
+    execSync(cleanCommand, {stdio: 'ignore', cwd: !outputPath ? path.join(__dirname, 'flotiqApi') : outputPath});
 }
 
 async function main() {
@@ -89,17 +88,17 @@ async function main() {
 
         if (compileToJs) {
             console.log('Compiling to javascript...');
-            getCleanUpCommand(compileToJs);
+            getCleanUpCommand();
             execSync(buildJsCommand, {stdio: 'ignore', cwd: __dirname});
             getMoveCommand(outputPath, true);
         } else {
             getMoveCommand(outputPath);
-            getCleanUpCommand(compileToJs, outputPath);
+            getCleanUpCommand(outputPath);
         }
 
         console.log('Client generated successfully!');
     } catch (error) {
-        console.error('An error occurred:', error, error.stdio);
+        console.error('An error occurred:', error);
         process.exit(1);
     }
 }
