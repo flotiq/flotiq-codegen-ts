@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 const inquirer = require('inquirer');
-const {execSync} = require('child_process');
+const { execSync } = require('child_process');
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
@@ -103,5 +103,4 @@ async function main() {
         process.exit(1);
     }
 }
-
 main();
