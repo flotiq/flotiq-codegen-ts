@@ -11,4 +11,3 @@ for file in $file_patterns; do
     rm "${file}.old"
   fi
 done
-

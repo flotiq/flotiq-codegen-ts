@@ -4,10 +4,25 @@ const { execSync } = require('child_process');
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
+const yargs = require('yargs');
+
+const compileToJsFlag = "compiled-js";
+
+const argv = yargs(process.argv)
+    .command("flotiq-codegen-ts generate [options]", "Generate api integration for your Flotiq project", {})
+    .usage("Use flotiq-codegen-ts generates typescript Fetch API integration for your Flotiq project.")
+    .option(compileToJsFlag, {
+        description: "generates Fetch API integration compiled to JS",
+        alias: "",
+        type: "boolean",
+        default: false,
+        demandOption: false,
+    }).help().alias("help", "h").argv;
+
 
 async function downloadSchema(url) {
     const response = await axios.get(url);
-   // console.log(response.data);
+    // console.log(response.data);
     return JSON.stringify(response.data);
 }
 
@@ -23,6 +38,21 @@ async function saveSchemaToFile(schema, filename) {
     return filePath;
 }
 
+const getMoveCommand = (outputPath, buildToJs = false) => {
+    const path = buildToJs ? 'flotiqApiBuildJs' : 'flotiqApi';
+    const clearDestination = `rm -fr ${outputPath}`;
+    const command = `mv ${__dirname}/${path} ${outputPath}`;
+
+    execSync(clearDestination, {stdio: 'ignore', cwd: __dirname});
+    execSync(command, {stdio: 'ignore', cwd: __dirname});
+}
+
+const getCleanUpCommand = (outputPath = null) => {
+    const cleanCommand = `${__dirname}/clean_duplicate_import.sh`;
+
+    execSync(cleanCommand, {stdio: 'ignore', cwd: !outputPath ? path.join(__dirname, 'flotiqApi') : outputPath});
+}
+
 async function main() {
     const answers = await inquirer.prompt([
         {
@@ -35,7 +65,8 @@ async function main() {
 
     const { apiKey } = answers;
     const schemaUrl = `https://api.flotiq.com/api/v1/open-api-schema.json?user_only=1&hydrate=1&auth_token=${apiKey}`;
-    
+    const compileToJs = argv[compileToJsFlag];
+
     try {
         console.log('Downloading OpenAPI schema...');
         const schema = await downloadSchema(schemaUrl);
@@ -46,20 +77,28 @@ async function main() {
         const outputPath = path.join(process.cwd(), 'flotiqApi');
         // Generate command
         // const command = `openapi-generator-cli generate -i ${schemaFile} -g typescript-fetch --additional-properties=apiKey=${apiKey} -o ./generated-api`;
-        const genCommand = `openapi-generator-cli --openapitools ${configPath} generate`
-        const mvCommand = `mv ${__dirname}/flotiqApi ${outputPath}`;
-        const cleanCommand = `${__dirname}/clean_duplicate_import.sh`;
+        const genCommand = `openapi-generator-cli --openapitools ${configPath} generate`;
+
+        // compile api to js command
+        const buildJsCommand = `sh build_to_js.sh`;
 
         console.log('Generating client from schema...');
-        execSync(genCommand, { stdio: 'ignore', cwd: __dirname});
-        execSync(mvCommand, { stdio: 'ignore', cwd: __dirname});
-        execSync(cleanCommand, { stdio: 'ignore', cwd: outputPath});
-        
+        execSync(genCommand, {stdio: 'ignore', cwd: __dirname});
+
+        if (compileToJs) {
+            console.log('Compiling to javascript...');
+            getCleanUpCommand();
+            execSync(buildJsCommand, {stdio: 'ignore', cwd: __dirname});
+            getMoveCommand(outputPath, true);
+        } else {
+            getMoveCommand(outputPath);
+            getCleanUpCommand(outputPath);
+        }
+
         console.log('Client generated successfully!');
     } catch (error) {
         console.error('An error occurred:', error);
         process.exit(1);
     }
 }
-
 main();
