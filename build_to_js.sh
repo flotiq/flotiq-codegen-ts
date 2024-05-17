@@ -2,9 +2,9 @@
 
 mkdir ./flotiqApiBuildJs
 
-tsc -p ./flotiqAPi/
+tsc -p ./flotiqApi/
 
-mv -f flotiqAPi/dist/* flotiqApiBuildJs
-rm -fr flotiqAPi
+mv -f flotiqApi/dist/* flotiqApiBuildJs
+rm -fr flotiqApi
 
 exit 0
