@@ -63,7 +63,7 @@ async function main() {
         }
     ]);
 
-    const {apiKey} = answers;
+    const { apiKey } = answers;
     const schemaUrl = `https://api.flotiq.com/api/v1/open-api-schema.json?user_only=1&hydrate=1&auth_token=${apiKey}`;
     const compileToJs = argv[compileToJsFlag];
 
@@ -75,7 +75,6 @@ async function main() {
         // Correctly resolving the path to cfg.json
         const configPath = path.join(__dirname, 'cfg.json');
         const outputPath = path.join(process.cwd(), 'flotiqApi');
-
         // Generate command
         // const command = `openapi-generator-cli generate -i ${schemaFile} -g typescript-fetch --additional-properties=apiKey=${apiKey} -o ./generated-api`;
         const genCommand = `openapi-generator-cli --openapitools ${configPath} generate`;
