@@ -5,8 +5,31 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const yargs = require('yargs');
+const admZip = require('adm-zip')
 
 const compileToJsFlag = "compiled-js";
+
+async function lambdaInvoke(url) {
+
+    try {
+        const response = await axios.get(url, { responseType: 'arraybuffer' })
+        const decoded = Buffer.from(response.data, 'base64')
+        return decoded;
+
+    } catch (error) {
+        if (error.response) {
+            const decoder = new TextDecoder('utf-8')
+            const errorData = JSON.parse(decoder.decode(error.response.data))
+
+            console.error('Error fetching data: ', errorData.message);
+            process.exit(1);
+        } else {
+            console.error('Error fetching data: unknown error');
+            process.exit(1);
+        }
+    }
+}
+
 
 const argv = yargs(process.argv)
     .command("flotiq-codegen-ts generate [options]", "Generate api integration for your Flotiq project", {})
@@ -20,23 +43,6 @@ const argv = yargs(process.argv)
     }).help().alias("help", "h").argv;
 
 
-async function downloadSchema(url) {
-    const response = await axios.get(url);
-    // console.log(response.data);
-    return JSON.stringify(response.data);
-}
-
-async function modifySchema(schema) {
-    // Example: Replace a string in the schema
-    const schema1 = schema + "";
-    return schema1.replace(/Content: /g, '');
-}
-
-async function saveSchemaToFile(schema, filename) {
-    const filePath = path.join(__dirname, filename);
-    fs.writeFileSync(filePath, schema);
-    return filePath;
-}
 
 const getMoveCommand = (outputPath, buildToJs = false) => {
     const path = buildToJs ? 'flotiqApiBuildJs' : 'flotiqApi';
@@ -64,26 +70,23 @@ async function main() {
     ]);
 
     const { apiKey } = answers;
-    const schemaUrl = `https://api.flotiq.com/api/v1/open-api-schema.json?user_only=1&hydrate=1&auth_token=${apiKey}`;
     const compileToJs = argv[compileToJsFlag];
 
     try {
         console.log('Downloading OpenAPI schema...');
-        const schema = await downloadSchema(schemaUrl);
-        const modifiedSchema = await modifySchema(schema);
-        const schemaFile = await saveSchemaToFile(modifiedSchema, 'schema.json');
-        // Correctly resolving the path to cfg.json
-        const configPath = path.join(__dirname, 'cfg.json');
-        const outputPath = path.join(process.cwd(), 'flotiqApi');
+
         // Generate command
-        // const command = `openapi-generator-cli generate -i ${schemaFile} -g typescript-fetch --additional-properties=apiKey=${apiKey} -o ./generated-api`;
-        const genCommand = `openapi-generator-cli --openapitools ${configPath} generate`;
+        const lambdaUrl = `https://0c8judkapg.execute-api.us-east-1.amazonaws.com/default/codegen-ts?token=${apiKey}`
+        var zip = new admZip(await lambdaInvoke(lambdaUrl))
+        const outputPath = path.join(process.cwd(), 'flotiqApi');
+        zip.extractAllTo(outputPath)
+
 
         // compile api to js command
         const buildJsCommand = `sh build_to_js.sh`;
 
         console.log('Generating client from schema...');
-        execSync(genCommand, {stdio: 'ignore', cwd: __dirname});
+
 
         if (compileToJs) {
             console.log('Compiling to javascript...');
@@ -91,7 +94,7 @@ async function main() {
             execSync(buildJsCommand, {stdio: 'ignore', cwd: __dirname});
             getMoveCommand(outputPath, true);
         } else {
-            getMoveCommand(outputPath);
+            // getMoveCommand(outputPath);
             getCleanUpCommand(outputPath);
         }
 
