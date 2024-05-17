@@ -44,7 +44,7 @@ npx flotiq-codegen-ts generate --compiled-js
 ```
 
 Now set of compiled `d.ts` and `.js` will be automatically generated in your `flotiqApi` folder.
-Then you start using it:
+You can now import and use the API in your project:
 
 ```
 import { FlotiqApi } from 'flotiqApi/index';
