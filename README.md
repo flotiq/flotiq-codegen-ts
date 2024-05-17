@@ -36,15 +36,26 @@ const flotiq = new FlotiqApi(FLOTIQ_RO_API_KEY);
 const eventList = await flotiq.Event.list({limit:100});
 ```
 
-## Generating declarations
+## Usage in JS project
+If you wish to use `flotiqApi` in JS project you can use `flotiq-codegen-ts` with `--compiled-js` flag
 
-To generate a set of `d.ts` files for Typescript follow these steps:
+```
+npx flotiq-codegen-ts generate --compiled-js
+```
 
-1. Execute `npx flotiq-codegen-ts generate` as usual
-2. Go to `./flotiqApi` directory
-3. Execute `npm run build`
+Now set of compiled `d.ts` and `.js` will be automatically generated in your `flotiqApi` folder.
+Then you start using it:
 
-This will render the declarations in the `flotiqApi/dist` folder.
+```
+import { FlotiqApi } from 'flotiqApi/index';
+const FLOTIQ_RO_API_KEY = 'YOUR_API_KEY';
+const flotiq = new FlotiqApi(FLOTIQ_RO_API_KEY);
+  
+// Use your IDE IntelliSense to work with types & api endpoints!
+
+const eventList = await flotiq.Event.list({limit:100});
+```
+
 
 ## Developing
 
