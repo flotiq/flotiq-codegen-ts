@@ -78,27 +78,30 @@ async function main() {
         // Generate command
         const lambdaUrl = `https://0c8judkapg.execute-api.us-east-1.amazonaws.com/default/codegen-ts?token=${apiKey}`
         var zip = new admZip(await lambdaInvoke(lambdaUrl))
+        const localPath = path.join(__dirname, 'flotiqApi');
         const outputPath = path.join(process.cwd(), 'flotiqApi');
-        zip.extractAllTo(outputPath)
+        console.log('Generating client from schema...');
 
+        if(!compileToJs){
+            zip.extractAllTo(outputPath);
+            getCleanUpCommand(outputPath);
+            console.log('Client generated successfully!');
+            return;
+        }
+
+        zip.extractAllTo(localPath)
 
         // compile api to js command
         const buildJsCommand = `sh build_to_js.sh`;
 
-        console.log('Generating client from schema...');
+        console.log('Compiling to javascript...');
+        getCleanUpCommand();
 
-
-        if (compileToJs) {
-            console.log('Compiling to javascript...');
-            getCleanUpCommand();
-            execSync(buildJsCommand, {stdio: 'ignore', cwd: __dirname});
-            getMoveCommand(outputPath, true);
-        } else {
-            // getMoveCommand(outputPath);
-            getCleanUpCommand(outputPath);
-        }
+        execSync(buildJsCommand, {stdio: 'ignore', cwd: __dirname});
+        getMoveCommand(outputPath, true);
 
         console.log('Client generated successfully!');
+
     } catch (error) {
         console.error('An error occurred:', error);
         process.exit(1);
