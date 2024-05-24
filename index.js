@@ -73,7 +73,7 @@ async function main() {
     const envName = "FLOTIQ_API_KEY";
     let apiKey = ''
     for (const file of envfiles) {
-            const filepath = path.join(__dirname, file)
+            const filepath = path.join(process.cwd(), file)
 
             if (fs.existsSync(filepath)) {
                 dotenv.config({ path: filepath})
