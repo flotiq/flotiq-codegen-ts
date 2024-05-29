@@ -4,6 +4,7 @@ const { execSync } = require('child_process');
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
+const dotenv = require('dotenv');
 const yargs = require('yargs');
 
 const compileToJsFlag = "compiled-js";
@@ -38,6 +39,18 @@ async function saveSchemaToFile(schema, filename) {
     return filePath;
 }
 
+async function confirm(msg) {
+    const response = await inquirer.prompt([
+        {
+            name: 'confirmation',
+            type: 'confirm',
+            message: msg
+        }
+    ]);
+    return response.confirmation;
+}
+
+
 const getMoveCommand = (outputPath, buildToJs = false) => {
     const path = buildToJs ? 'flotiqApiBuildJs' : 'flotiqApi';
     const clearDestination = `rm -fr ${outputPath}`;
@@ -53,17 +66,44 @@ const getCleanUpCommand = (outputPath = null) => {
     execSync(cleanCommand, {stdio: 'ignore', cwd: !outputPath ? path.join(__dirname, 'flotiqApi') : outputPath});
 }
 
-async function main() {
-    const answers = await inquirer.prompt([
-        {
-            type: 'input',
-            name: 'apiKey',
-            message: 'Please enter your Flotiq API key:',
-            validate: input => !!input || 'API key cannot be empty.'
-        }
-    ]);
 
-    const { apiKey } = answers;
+async function main() {
+
+    const envfiles = ['.env', 'env.local', 'env.development'];
+    const envName = "FLOTIQ_API_KEY";
+    let apiKey = ''
+    for (const file of envfiles) {
+            const filepath = path.join(process.cwd(), file)
+
+            if (fs.existsSync(filepath)) {
+                dotenv.config({ path: filepath})
+                
+                if (process.env[envName]) {
+
+                    query = await confirm(`${envName} found in env file. \n  Do you want to use API key from ${file}?`)
+                    if (query) {
+                        //using API key from file
+                        apiKey = process.env[envName];
+                    }
+                }
+            }
+    }
+
+    if (! apiKey) {
+        const answers = await inquirer.prompt([
+            {
+                type: 'input',
+                name: 'apiKey',
+                message: 'Please enter your Flotiq API key:',
+                validate: input => !!input || 'API key cannot be empty.'
+            }
+        ]);
+
+        apiKey = answers.apiKey;
+
+    }
+
+
     const schemaUrl = `https://api.flotiq.com/api/v1/open-api-schema.json?user_only=1&hydrate=1&auth_token=${apiKey}`;
     const compileToJs = argv[compileToJsFlag];
 
