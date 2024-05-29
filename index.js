@@ -108,11 +108,6 @@ async function main() {
     const compileToJs = argv[compileToJsFlag];
 
     try {
-
-        if (fs.existsSync('test.txt')) {
-            console.log('file exists')
-        }
-
         console.log('Downloading OpenAPI schema...');
         const schema = await downloadSchema(schemaUrl);
         const modifiedSchema = await modifySchema(schema);
