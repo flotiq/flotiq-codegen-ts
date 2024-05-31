@@ -1,19 +1,21 @@
 #!/usr/bin/env node
 const inquirer = require('inquirer');
-const { execSync } = require('child_process');
+const {execSync} = require('child_process');
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
 const yargs = require('yargs');
 const admZip = require('adm-zip')
+const buildToJs = require("./build_to_js");
+const cleanDuplicateImport = require("./clean_duplicate_import");
 
 const compileToJsFlag = "compiled-js";
 
 async function lambdaInvoke(url) {
 
     try {
-        const response = await axios.get(url, { responseType: 'arraybuffer' })
+        const response = await axios.get(url, {responseType: 'arraybuffer'})
         const decoded = Buffer.from(response.data, 'base64')
         return decoded;
 
@@ -44,7 +46,6 @@ const argv = yargs(process.argv)
     }).help().alias("help", "h").argv;
 
 
-
 async function confirm(msg) {
     const response = await inquirer.prompt([
         {
@@ -56,46 +57,29 @@ async function confirm(msg) {
     return response.confirmation;
 }
 
-
-const getMoveCommand = (outputPath, buildToJs = false) => {
-    const path = buildToJs ? 'flotiqApiBuildJs' : 'flotiqApi';
-    const clearDestination = `rm -fr ${outputPath}`;
-    const command = `mv ${__dirname}/${path} ${outputPath}`;
-
-    execSync(clearDestination, {stdio: 'ignore', cwd: __dirname});
-    execSync(command, {stdio: 'ignore', cwd: __dirname});
-}
-
-const getCleanUpCommand = (outputPath = null) => {
-    const cleanCommand = `${__dirname}/clean_duplicate_import.sh`;
-
-    execSync(cleanCommand, {stdio: 'ignore', cwd: !outputPath ? path.join(__dirname, 'flotiqApi') : outputPath});
-}
-
-
 async function main() {
 
     const envfiles = ['.env', 'env.local', 'env.development'];
     const envName = "FLOTIQ_API_KEY";
     let apiKey = ''
     for (const file of envfiles) {
-            const filepath = path.join(process.cwd(), file)
+        const filepath = path.join(process.cwd(), file)
 
-            if (fs.existsSync(filepath)) {
-                dotenv.config({ path: filepath})
+        if (fs.existsSync(filepath)) {
+            dotenv.config({path: filepath})
 
-                if (process.env[envName]) {
+            if (process.env[envName]) {
 
-                    query = await confirm(`${envName} found in env file. \n  Do you want to use API key from ${file}?`)
-                    if (query) {
-                        //using API key from file
-                        apiKey = process.env[envName];
-                    }
+                query = await confirm(`${envName} found in env file. \n  Do you want to use API key from ${file}?`)
+                if (query) {
+                    //using API key from file
+                    apiKey = process.env[envName];
                 }
             }
+        }
     }
 
-    if (! apiKey) {
+    if (!apiKey) {
         const answers = await inquirer.prompt([
             {
                 type: 'input',
@@ -121,23 +105,18 @@ async function main() {
         const outputPath = path.join(process.cwd(), 'flotiqApi');
         console.log('Generating client from schema...');
 
-        if(!compileToJs){
+        if (!compileToJs) {
             zip.extractAllTo(outputPath);
-            getCleanUpCommand(outputPath);
+            cleanDuplicateImport(outputPath);
             console.log('Client generated successfully!');
             return;
         }
 
         zip.extractAllTo(localPath)
 
-        // compile api to js command
-        const buildJsCommand = `sh build_to_js.sh`;
-
         console.log('Compiling to javascript...');
-        getCleanUpCommand();
-
-        execSync(buildJsCommand, {stdio: 'ignore', cwd: __dirname});
-        getMoveCommand(outputPath, true);
+        cleanDuplicateImport(localPath);
+        buildToJs(localPath);
 
         console.log('Client generated successfully!');
 
@@ -146,4 +125,5 @@ async function main() {
         process.exit(1);
     }
 }
+
 main();
