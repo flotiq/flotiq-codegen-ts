@@ -3,6 +3,7 @@ const inquirer = require('inquirer');
 const {execSync} = require('child_process');
 const axios = require('axios');
 const fs = require('fs');
+const fce = require('fs-extra');
 const path = require('path');
 const dotenv = require('dotenv');
 const yargs = require('yargs');
@@ -106,6 +107,7 @@ async function main() {
         console.log('Generating client from schema...');
 
         if (!compileToJs) {
+            fce.removeSync('flotiqApi');
             zip.extractAllTo(outputPath);
             cleanDuplicateImport(outputPath);
             console.log('Client generated successfully!');
