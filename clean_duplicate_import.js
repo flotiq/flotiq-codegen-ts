@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const glob = require('glob');
 
-const filePatterns = ['src/models/*WithoutInternal.ts', 'src/models/*WithoutRequired.ts'];
+const filePatterns = ['src/models/*WithoutInternal.ts', 'src/models/*WithoutRequired.ts', 'src/models/*WithoutInternalAllOf*.ts'];
 const deleteLine = "import { DataSource, DataSourceFromJSON } from './DataSource';";
 
 const cleanDuplicateImport = (cwd) => {
