@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 const inquirer = require('inquirer');
-const {execSync} = require('child_process');
 const axios = require('axios');
 const fs = require('fs');
 const fce = require('fs-extra');
@@ -13,13 +12,14 @@ const cleanDuplicateImport = require("./clean_duplicate_import");
 
 const compileToJsFlag = "compiled-js";
 
+const CLI_GREEN = "\x1b[32m%s\x1b[0m";
+const CLI_BLUE = "\x1b[36m%s\x1b[0m";
+
 async function lambdaInvoke(url) {
 
     try {
         const response = await axios.get(url, {responseType: 'arraybuffer'})
-        const decoded = Buffer.from(response.data, 'base64')
-        return decoded;
-
+        return Buffer.from(response.data, 'base64');
     } catch (error) {
         if (error.response) {
             const decoder = new TextDecoder('utf-8')
@@ -101,30 +101,29 @@ async function main() {
 
         // Generate command
         const lambdaUrl = `https://0c8judkapg.execute-api.us-east-1.amazonaws.com/default/codegen-ts?token=${apiKey}`
-        var zip = new admZip(await lambdaInvoke(lambdaUrl))
-        const localPath = path.join(__dirname, 'flotiqApi');
+        const zip = new admZip(await lambdaInvoke(lambdaUrl));
         const outputPath = path.join(process.cwd(), 'flotiqApi');
         console.log('Generating client from schema...');
 
-        if (!compileToJs) {
-            fce.removeSync('flotiqApi');
-            zip.extractAllTo(outputPath);
-            cleanDuplicateImport(outputPath);
-            console.log('Client generated successfully!');
-            return;
+        if (fs.existsSync(outputPath)) {
+            console.log(`Found existing SDK files - cleaning up '${outputPath}' directory...`);
+            fce.removeSync(outputPath);
         }
 
-        console.log(`Extracting files to ${outputPath}`);
-        zip.extractAllTo(outputPath)
-        console.log(`Extracted ${outputPath}`);
-        execSync('ls -l', {stdio: 'ignore'});
+        console.log(`Extracting SDK client to '${outputPath}'...`);
+        zip.extractAllTo(outputPath);
 
-        console.log('Cleaning duplicates');
+        console.log('Cleaning up generated files...');
         cleanDuplicateImport(outputPath);
-        execSync('ls -l', {stdio: 'ignore'});
-        console.log('Compiling to javascript...');
-        buildToJs(outputPath);
-        console.log('Client generated successfully!');
+
+        if (compileToJs) {
+            console.log('Compiling to JavaScript...');
+            buildToJs(outputPath);
+        }
+
+        console.log(CLI_GREEN, 'Client generated successfully!');
+        console.log(CLI_GREEN, 'You can start using Flotiq SDK');
+        console.log(CLI_BLUE, 'Read more: https://github.com/flotiq/flotiq-codegen-ts');
 
     } catch (error) {
         console.error('An error occurred:', error);
