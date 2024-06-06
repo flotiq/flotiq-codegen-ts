@@ -84,6 +84,7 @@ async function main() {
                 if (query) {
                     //using API key from file
                     apiKey = process.env[envName];
+                    break;
                 }
             }
         }
