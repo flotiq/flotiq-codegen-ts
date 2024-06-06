@@ -3,7 +3,7 @@ const {execSync} = require('child_process');
 const buildToJs = (outputPath) => {
 
     // fce.mkdirp('flotiqApiBuildJs').then().catch(err => err && console.error(err));
-    execSync('tsc -p ./flotiqApi', {stdio: 'ignore'});
+    execSync('tsc -p ./flotiqApi', {stdio: 'inherit'});
 
     fce.moveSync('flotiqApi/dist/', 'flotiqApiBuildJs', {overwrite: true});
 

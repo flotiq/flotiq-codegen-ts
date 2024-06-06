@@ -114,12 +114,16 @@ async function main() {
             return;
         }
 
+        console.log(`Extracting files to ${localPath}`);
         zip.extractAllTo(localPath)
+        console.log(`Extracted ${localPath}`);
+        execSync('ls -l', {stdio: 'ignore'});
 
-        console.log('Compiling to javascript...');
+        console.log('Cleaning duplicates');
         cleanDuplicateImport(localPath);
+        execSync('ls -l', {stdio: 'ignore'});
+        console.log('Compiling to javascript...');
         buildToJs(localPath);
-
         console.log('Client generated successfully!');
 
     } catch (error) {
