@@ -106,19 +106,13 @@ async function main() {
     const compileToJs = argv[compileToJsFlag];
 
     try {
-        console.log('Downloading OpenAPI schema...');
+        console.log('Generating client from schema...');
 
         // Generate command
         const lambdaUrl = `https://0c8judkapg.execute-api.us-east-1.amazonaws.com/default/codegen-ts?token=${apiKey}`
         const zip = new admZip(await lambdaInvoke(lambdaUrl));
         const tmpPath = getWorkingPath();
         const outputPath = path.join(process.cwd(), 'flotiqApi');
-        console.log('Generating client from schema...');
-
-        if (fs.existsSync(outputPath)) {
-            console.log(`Found existing SDK in '${outputPath}' - cleaning up...`);
-            fce.removeSync(outputPath);
-        }
 
         console.log(`Extracting SDK client to tmp dir '${tmpPath}'...`);
         zip.extractAllTo(tmpPath);
@@ -129,12 +123,17 @@ async function main() {
             buildToJs(tmpPath);
         }
 
-        console.log(`Moving SDK to project '${outputPath}' directory...`);
+        if (fs.existsSync(outputPath)) {
+            console.log(`Found existing SDK in '${outputPath}' - cleaning up...`);
+            fce.removeSync(outputPath);
+        }
+
+        console.log(`Moving SDK to '${outputPath}'...`);
         fce.moveSync(tmpPath, outputPath);
         fce.removeSync(tmpPath);
 
         console.log(CLI_GREEN, 'Client generated successfully!');
-        console.log(CLI_GREEN, 'You can start using Flotiq SDK');
+        console.log(CLI_GREEN, 'You can start using your Flotiq SDK');
         console.log(CLI_BLUE, 'Read more: https://github.com/flotiq/flotiq-codegen-ts');
 
     } catch (error) {
