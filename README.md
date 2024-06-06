@@ -11,7 +11,7 @@ This package generates Typescript Fetch API integration for your Flotiq project.
 
 ## See it in action!
 
-![Flotiq API accessible through TypeScript](./.images/flotiq-typescript-intellisense.gif)
+![Flotiq API accessible through TypeScript](./.images/flotiq-typescript-intellisense-2.gif)
 
 Go to this [JSFiddle](https://jsfiddle.net/o5rafnpw/1/) to see a (limited) demo.
 
