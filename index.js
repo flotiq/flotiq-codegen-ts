@@ -112,15 +112,16 @@ async function main() {
         const lambdaUrl = `https://0c8judkapg.execute-api.us-east-1.amazonaws.com/default/codegen-ts?token=${apiKey}`
         const zip = new admZip(await lambdaInvoke(lambdaUrl));
         const tmpPath = getWorkingPath();
+        const tmpSDKPath = `${tmpPath}/flotiqApi`;
         const outputPath = path.join(process.cwd(), 'flotiqApi');
 
         console.log(`Extracting SDK client to tmp dir '${tmpPath}'...`);
-        zip.extractAllTo(tmpPath);
-        cleanDuplicateImport(tmpPath);
+        zip.extractAllTo(tmpSDKPath);
+        cleanDuplicateImport(tmpSDKPath);
 
         if (compileToJs) {
             console.log('Compiling to JavaScript...');
-            buildToJs(tmpPath);
+            buildToJs(tmpSDKPath);
         }
 
         if (fs.existsSync(outputPath)) {
@@ -129,7 +130,7 @@ async function main() {
         }
 
         console.log(`Moving SDK to '${outputPath}'...`);
-        fce.moveSync(tmpPath, outputPath);
+        fce.moveSync(tmpSDKPath, outputPath);
         fce.removeSync(tmpPath);
 
         console.log(CLI_GREEN, 'Client generated successfully!');

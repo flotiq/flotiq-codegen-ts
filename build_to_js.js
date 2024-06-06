@@ -1,14 +1,18 @@
 const fce = require('fs-extra');
 const {execSync} = require('child_process');
-const buildToJs = (outputPath) => {
 
-    // fce.mkdirp('flotiqApiBuildJs').then().catch(err => err && console.error(err));
-    execSync('tsc -p ./flotiqApi', {stdio: 'inherit'});
+/**
+ * Move raw TypeScript code to tmp _copy dir
+ * Run compilation
+ * Move back compiled files to standard flotiqApi dir
+ * @param tmpSDKPath
+ */
+const buildToJs = (tmpSDKPath) => {
+    const sdkCopyPath = tmpSDKPath.replace('flotiqApi', 'flotiqApi_copy');
+    fce.moveSync(tmpSDKPath, sdkCopyPath);
 
-    fce.moveSync('flotiqApi/dist/', 'flotiqApiBuildJs', {overwrite: true});
-
-    fce.removeSync('flotiqApi');
-    fce.moveSync("flotiqApiBuildJs", outputPath, {overwrite: true});
+    execSync(`tsc -p ${sdkCopyPath}`, {stdio: 'inherit'});
+    fce.moveSync(`${sdkCopyPath}/dist/`, `${tmpSDKPath}`, {overwrite: true});
 }
 
 module.exports = buildToJs;
