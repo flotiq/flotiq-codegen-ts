@@ -33,7 +33,7 @@ const flotiq = new FlotiqApi(FLOTIQ_RO_API_KEY);
   
 // Use your IDE IntelliSense to work with types & api endpoints!
 
-const eventList = await flotiq.EventApi.list({limit:100});
+const eventList = await flotiq.EventAPI.list({limit:100});
 ```
 
 ## Usage in JS project
@@ -53,7 +53,7 @@ const flotiq = new FlotiqApi(FLOTIQ_RO_API_KEY);
   
 // Use your IDE IntelliSense to work with types & api endpoints!
 
-const eventList = await flotiq.EventApi.list({limit:100});
+const eventList = await flotiq.EventAPI.list({limit:100});
 ```
 
 
