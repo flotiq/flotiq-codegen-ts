@@ -26,7 +26,7 @@ npx flotiq-codegen-ts generate
 Run `flotiq-codegen-ts`, provide your API key and wait for your Typescript code to be generated in the `flotiqApi` folder.
 Then start using it:
 
-```
+```javascript
 import { FlotiqApi } from 'flotiqApi/src';
 const FLOTIQ_RO_API_KEY = 'YOUR_API_KEY';
 const flotiq = new FlotiqApi(FLOTIQ_RO_API_KEY);
@@ -46,7 +46,7 @@ npx flotiq-codegen-ts generate --compiled-js
 Now set of compiled `d.ts` and `.js` will be automatically generated in your `flotiqApi` folder.
 You can now import and use the API in your project:
 
-```
+```javascript
 import { FlotiqApi } from 'flotiqApi/index';
 const FLOTIQ_RO_API_KEY = 'YOUR_API_KEY';
 const flotiq = new FlotiqApi(FLOTIQ_RO_API_KEY);
