@@ -6,7 +6,8 @@ const fce = require('fs-extra');
 const path = require('path');
 const dotenv = require('dotenv');
 const yargs = require('yargs');
-const admZip = require('adm-zip')
+const admZip = require('adm-zip');
+const os = require('os');
 const buildToJs = require("./build_to_js");
 const cleanDuplicateImport = require("./clean_duplicate_import");
 
@@ -14,6 +15,8 @@ const compileToJsFlag = "compiled-js";
 
 const CLI_GREEN = "\x1b[32m%s\x1b[0m";
 const CLI_BLUE = "\x1b[36m%s\x1b[0m";
+
+const getWorkingPath = () => fs.mkdtempSync(`${os.tmpdir()}${path.sep}`);
 
 async function lambdaInvoke(url) {
 
@@ -39,7 +42,7 @@ const argv = yargs(process.argv)
     .command("flotiq-codegen-ts generate [options]", "Generate api integration for your Flotiq project", {})
     .usage("Use flotiq-codegen-ts generates typescript Fetch API integration for your Flotiq project.")
     .option(compileToJsFlag, {
-        description: "generates Fetch API integration compiled to JS",
+        description: "Generates Fetch API integration compiled to JavaScript",
         alias: "",
         type: "boolean",
         default: false,
@@ -60,7 +63,13 @@ async function confirm(msg) {
 
 async function main() {
 
-    const envfiles = ['.env', 'env.local', 'env.development'];
+    const envfiles = [
+        '.env',
+        '.env.local',
+        '.env.development',
+        'env.local',
+        'env.development'
+    ];
     const envName = "FLOTIQ_API_KEY";
     let apiKey = ''
     for (const file of envfiles) {
@@ -71,7 +80,7 @@ async function main() {
 
             if (process.env[envName]) {
 
-                query = await confirm(`${envName} found in env file. \n  Do you want to use API key from ${file}?`)
+                query = await confirm(`${envName} found in '${file}' file. \n  Do you want to use API key from ${file}?`)
                 if (query) {
                     //using API key from file
                     apiKey = process.env[envName];
@@ -102,24 +111,27 @@ async function main() {
         // Generate command
         const lambdaUrl = `https://0c8judkapg.execute-api.us-east-1.amazonaws.com/default/codegen-ts?token=${apiKey}`
         const zip = new admZip(await lambdaInvoke(lambdaUrl));
+        const tmpPath = getWorkingPath();
         const outputPath = path.join(process.cwd(), 'flotiqApi');
         console.log('Generating client from schema...');
 
         if (fs.existsSync(outputPath)) {
-            console.log(`Found existing SDK files - cleaning up '${outputPath}' directory...`);
+            console.log(`Found existing SDK in '${outputPath}' - cleaning up...`);
             fce.removeSync(outputPath);
         }
 
-        console.log(`Extracting SDK client to '${outputPath}'...`);
-        zip.extractAllTo(outputPath);
-
-        console.log('Cleaning up generated files...');
-        cleanDuplicateImport(outputPath);
+        console.log(`Extracting SDK client to tmp dir '${tmpPath}'...`);
+        zip.extractAllTo(tmpPath);
+        cleanDuplicateImport(tmpPath);
 
         if (compileToJs) {
             console.log('Compiling to JavaScript...');
-            buildToJs(outputPath);
+            buildToJs(tmpPath);
         }
+
+        console.log(`Moving SDK to project '${outputPath}' directory...`);
+        fce.moveSync(tmpPath, outputPath);
+        fce.removeSync(tmpPath);
 
         console.log(CLI_GREEN, 'Client generated successfully!');
         console.log(CLI_GREEN, 'You can start using Flotiq SDK');
