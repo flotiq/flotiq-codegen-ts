@@ -12,10 +12,14 @@ const buildToJs = require("./build_to_js");
 const cleanDuplicateImport = require("./clean_duplicate_import");
 
 const compileToJsFlag = "compiled-js";
+const watchFlag = "watch";
+const watchTimeStamp = 15000; // 15s
 
 const CLI_GREEN = "\x1b[32m%s\x1b[0m";
 const CLI_BLUE = "\x1b[36m%s\x1b[0m";
 
+//@todo move to env ?
+const FILTERS_URL = "https://api.flotiq.com/api/v1/internal/contenttype"
 const getWorkingPath = () => fs.mkdtempSync(`${os.tmpdir()}${path.sep}`);
 
 async function lambdaInvoke(url) {
@@ -41,6 +45,13 @@ async function lambdaInvoke(url) {
 const argv = yargs(process.argv)
     .command("flotiq-codegen-ts generate [options]", "Generate api integration for your Flotiq project", {})
     .usage("Use flotiq-codegen-ts generates typescript Fetch API integration for your Flotiq project.")
+    .option(watchFlag, {
+        description: "Listen for changes in Flotiq Api Schema, and regenerate SDK after detected change",
+        alias: "",
+        type: "boolean",
+        default: false,
+        demandOption: false,
+    })
     .option(compileToJsFlag, {
         description: "Generates Fetch API integration compiled to JavaScript",
         alias: "",
@@ -60,6 +71,110 @@ async function confirm(msg) {
     ]);
     return response.confirmation;
 }
+
+async function generateSDK(apiKey, compileToJs) {
+    try {
+        console.log('Generating client from schema...');
+
+        // Generate command
+        const lambdaUrl = `https://0c8judkapg.execute-api.us-east-1.amazonaws.com/default/codegen-ts?token=${apiKey}`
+        const zip = new admZip(await lambdaInvoke(lambdaUrl));
+        const tmpPath = getWorkingPath();
+        const tmpSDKPath = `${tmpPath}/flotiqApi`;
+        const outputPath = path.join(process.cwd(), 'flotiqApi');
+
+        console.log(`Extracting SDK client to tmp dir '${tmpPath}'...`);
+        zip.extractAllTo(tmpSDKPath);
+        cleanDuplicateImport(tmpSDKPath);
+
+        if (compileToJs) {
+            console.log('Compiling to JavaScript...');
+            buildToJs(tmpSDKPath);
+        }
+
+        if (fs.existsSync(outputPath)) {
+            console.log(`Found existing SDK in '${outputPath}' - cleaning up...`);
+            fce.removeSync(outputPath);
+        }
+
+        console.log(`Moving SDK to '${outputPath}'...`);
+        fce.moveSync(tmpSDKPath, outputPath);
+        fce.removeSync(tmpPath);
+
+        console.log(CLI_GREEN, 'Client generated successfully!');
+        console.log(CLI_GREEN, 'You can start using your Flotiq SDK');
+        console.log(CLI_BLUE, 'Read more: https://github.com/flotiq/flotiq-codegen-ts');
+
+    } catch (error) {
+        console.error('An error occurred:', error);
+        process.exit(1);
+    }
+}
+
+function parseResult(result, key) {
+    return result?.data[0][key];
+}
+
+async function checkForChanges(apiKey) {
+    //@todo add console log with info that application is looking for changes
+    const updatedAtResult = await makeRequest(apiKey, 'updatedAt');
+    const createdAtResult = await makeRequest(apiKey, 'createdAt');
+
+    return {
+        updatedAt: parseResult(updatedAtResult, 'updatedAt'),
+        createdAt: parseResult(createdAtResult, 'createdAt')
+    }
+}
+
+
+async function makeRequest(apiKey, orderBy) {
+    try {
+        const response = await axios.get(
+            FILTERS_URL,
+            {
+                params: {
+                    order_by: orderBy,
+                    limit: 1,
+                    order_direction: 'desc'
+                },
+                headers: {
+                    ['X-AUTH-TOKEN']: apiKey
+                }
+            }
+        );
+
+        return response.data;
+    } catch (e) {
+        console.error(e);
+        //@todo handle errors
+        //handle error
+    }
+}
+
+
+async function watchChanges(apiKey, compileToJs) {
+
+    const data = await checkForChanges(apiKey);
+    const configFile = fce.readJsonSync('./config.json');
+
+    console.log('data: \n', data);
+    console.log('config: \n', configFile);
+
+
+    if (JSON.stringify(data) === JSON.stringify(configFile)) {
+        console.log('no changes found');
+        //@todo add console log with info that no changes was detected
+        return; // no changes were detected
+    }
+
+    console.log('changes detected');
+    fce.writeJsonSync('./config.json', data);
+
+    //
+    // fce.writeJsonSync(data);
+    // await generateSDK(apiKey, compileToJs);
+}
+
 
 async function main() {
 
@@ -105,43 +220,15 @@ async function main() {
     }
 
     const compileToJs = argv[compileToJsFlag];
+    const watch = argv[compileToJsFlag];
 
-    try {
-        console.log('Generating client from schema...');
+    await watchChanges(apiKey, compileToJs);
 
-        // Generate command
-        const lambdaUrl = `https://0c8judkapg.execute-api.us-east-1.amazonaws.com/default/codegen-ts?token=${apiKey}`
-        const zip = new admZip(await lambdaInvoke(lambdaUrl));
-        const tmpPath = getWorkingPath();
-        const tmpSDKPath = `${tmpPath}/flotiqApi`;
-        const outputPath = path.join(process.cwd(), 'flotiqApi');
-
-        console.log(`Extracting SDK client to tmp dir '${tmpPath}'...`);
-        zip.extractAllTo(tmpSDKPath);
-        cleanDuplicateImport(tmpSDKPath);
-
-        if (compileToJs) {
-            console.log('Compiling to JavaScript...');
-            buildToJs(tmpSDKPath);
-        }
-
-        if (fs.existsSync(outputPath)) {
-            console.log(`Found existing SDK in '${outputPath}' - cleaning up...`);
-            fce.removeSync(outputPath);
-        }
-
-        console.log(`Moving SDK to '${outputPath}'...`);
-        fce.moveSync(tmpSDKPath, outputPath);
-        fce.removeSync(tmpPath);
-
-        console.log(CLI_GREEN, 'Client generated successfully!');
-        console.log(CLI_GREEN, 'You can start using your Flotiq SDK');
-        console.log(CLI_BLUE, 'Read more: https://github.com/flotiq/flotiq-codegen-ts');
-
-    } catch (error) {
-        console.error('An error occurred:', error);
-        process.exit(1);
-    }
+    // if (watch) {
+    //     setInterval(await watch,watchTimeStamp);
+    // } else {
+    //     await generateSDK(apiKey, compileToJs);
+    // }
 }
 
 main();
