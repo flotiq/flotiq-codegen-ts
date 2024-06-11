@@ -13,13 +13,11 @@ const cleanDuplicateImport = require("./clean_duplicate_import");
 
 const compileToJsFlag = "compiled-js";
 const watchFlag = "watch";
-const watchTimeStamp = 15000; // 15s
+const watchDuration = 15000;
 
 const CLI_GREEN = "\x1b[32m%s\x1b[0m";
 const CLI_BLUE = "\x1b[36m%s\x1b[0m";
 
-//@todo move to env ?
-const FILTERS_URL = "https://api.flotiq.com/api/v1/internal/contenttype"
 const getWorkingPath = () => fs.mkdtempSync(`${os.tmpdir()}${path.sep}`);
 
 async function lambdaInvoke(url) {
@@ -111,23 +109,20 @@ async function generateSDK(apiKey, compileToJs) {
     }
 }
 
-function parseResult(result, key) {
-    return result?.data[0][key];
-}
-
 async function checkForChanges(apiKey) {
-    //@todo add console log with info that application is looking for changes
     const updatedAtResult = await makeRequest(apiKey, 'updatedAt');
     const createdAtResult = await makeRequest(apiKey, 'createdAt');
 
     return {
-        updatedAt: parseResult(updatedAtResult, 'updatedAt'),
-        createdAt: parseResult(createdAtResult, 'createdAt')
+        updatedAt: updatedAtResult.data[0].updatedAt,
+        createdAt: createdAtResult.data[0].createdAt,
     }
 }
 
 
 async function makeRequest(apiKey, orderBy) {
+    const FILTERS_URL = "https://api.flotiq.com/api/v1/internal/contenttype"
+
     try {
         const response = await axios.get(
             FILTERS_URL,
@@ -144,35 +139,30 @@ async function makeRequest(apiKey, orderBy) {
         );
 
         return response.data;
-    } catch (e) {
-        console.error(e);
-        //@todo handle errors
-        //handle error
+    } catch (error) {
+        console.error('An error occurred in listening for changes. Details: ', error.response.data);
+        process.exit(1);
     }
 }
 
-
 async function watchChanges(apiKey, compileToJs) {
-
+    const configFile = './codegen-ts-watch-config.json';
     const data = await checkForChanges(apiKey);
-    const configFile = fce.readJsonSync('./config.json');
+    if (!fce.existsSync(configFile)) {
+        fce.writeJsonSync(configFile, {});
+    }
 
-    console.log('data: \n', data);
-    console.log('config: \n', configFile);
+    const configData = fce.readJsonSync(configFile);
 
-
-    if (JSON.stringify(data) === JSON.stringify(configFile)) {
-        console.log('no changes found');
-        //@todo add console log with info that no changes was detected
+    if (JSON.stringify(data) === JSON.stringify(configData)) {
+        console.log('No changes in schema was found');
         return; // no changes were detected
     }
 
-    console.log('changes detected');
-    fce.writeJsonSync('./config.json', data);
+    console.log(CLI_GREEN, 'Changes detected');
 
-    //
-    // fce.writeJsonSync(data);
-    // await generateSDK(apiKey, compileToJs);
+    fce.writeJsonSync(configFile, data);
+    await generateSDK(apiKey, compileToJs);
 }
 
 
@@ -220,15 +210,20 @@ async function main() {
     }
 
     const compileToJs = argv[compileToJsFlag];
-    const watch = argv[compileToJsFlag];
+    const watch = argv[watchFlag];
+
+    if (!watch) {
+        await generateSDK(apiKey, compileToJs);
+        return;
+    }
 
     await watchChanges(apiKey, compileToJs);
-
-    // if (watch) {
-    //     setInterval(await watch,watchTimeStamp);
-    // } else {
-    //     await generateSDK(apiKey, compileToJs);
-    // }
+    setInterval(
+        await watchChanges,
+        watchDuration,
+        apiKey,
+        compileToJs
+    );
 }
 
 main();
