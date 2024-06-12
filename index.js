@@ -148,6 +148,7 @@ async function watchChanges(apiKey, compileToJs) {
     const configFile = './src/codegen-ts-watch-config.json';
     const data = await checkForChanges(apiKey);
     if (!fce.existsSync(configFile)) {
+        fce.createFileSync(configFile);
         fce.writeJsonSync(configFile, {});
     }
 
