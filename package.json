@@ -23,6 +23,7 @@
     "dotenv": "^16.4.5",
     "fs-extra": "^11.2.0",
     "inquirer": "^8.2.0",
+    "loading-cli": "^1.1.2",
     "typescript": "^4.0",
     "yargs": "^15.3.1"
   }

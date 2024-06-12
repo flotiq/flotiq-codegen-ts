@@ -8,8 +8,9 @@ const dotenv = require('dotenv');
 const yargs = require('yargs');
 const admZip = require('adm-zip');
 const os = require('os');
-const buildToJs = require("./build_to_js");
-const cleanDuplicateImport = require("./clean_duplicate_import");
+const buildToJs = require("./src/build_to_js");
+const cleanDuplicateImport = require("./src/clean_duplicate_import");
+const loading = require('loading-cli');
 
 const compileToJsFlag = "compiled-js";
 const watchFlag = "watch";
@@ -18,7 +19,15 @@ const watchDuration = 15000;
 const CLI_GREEN = "\x1b[32m%s\x1b[0m";
 const CLI_BLUE = "\x1b[36m%s\x1b[0m";
 
+const colorYellow = (str) => {
+    return `\x1b[33m${str}\x1b[0m`;
+}
+
 const getWorkingPath = () => fs.mkdtempSync(`${os.tmpdir()}${path.sep}`);
+
+const loader = loading({
+    text: colorYellow("Watching for changes ..."), color: "yellow"
+});
 
 async function lambdaInvoke(url) {
 
@@ -60,13 +69,9 @@ const argv = yargs(process.argv)
 
 
 async function confirm(msg) {
-    const response = await inquirer.prompt([
-        {
-            name: 'confirmation',
-            type: 'confirm',
-            message: msg
-        }
-    ]);
+    const response = await inquirer.prompt([{
+        name: 'confirmation', type: 'confirm', message: msg
+    }]);
     return response.confirmation;
 }
 
@@ -114,8 +119,7 @@ async function checkForChanges(apiKey) {
     const createdAtResult = await makeRequest(apiKey, 'createdAt');
 
     return {
-        updatedAt: updatedAtResult.data[0].updatedAt,
-        createdAt: createdAtResult.data[0].createdAt,
+        updatedAt: updatedAtResult.data[0].updatedAt, createdAt: createdAtResult.data[0].createdAt,
     }
 }
 
@@ -124,19 +128,13 @@ async function makeRequest(apiKey, orderBy) {
     const FILTERS_URL = "https://api.flotiq.com/api/v1/internal/contenttype"
 
     try {
-        const response = await axios.get(
-            FILTERS_URL,
-            {
-                params: {
-                    order_by: orderBy,
-                    limit: 1,
-                    order_direction: 'desc'
-                },
-                headers: {
-                    ['X-AUTH-TOKEN']: apiKey
-                }
+        const response = await axios.get(FILTERS_URL, {
+            params: {
+                order_by: orderBy, limit: 1, order_direction: 'desc'
+            }, headers: {
+                ['X-AUTH-TOKEN']: apiKey
             }
-        );
+        });
 
         return response.data;
     } catch (error) {
@@ -146,7 +144,8 @@ async function makeRequest(apiKey, orderBy) {
 }
 
 async function watchChanges(apiKey, compileToJs) {
-    const configFile = './codegen-ts-watch-config.json';
+    loader.start();
+    const configFile = './src/codegen-ts-watch-config.json';
     const data = await checkForChanges(apiKey);
     if (!fce.existsSync(configFile)) {
         fce.writeJsonSync(configFile, {});
@@ -155,26 +154,22 @@ async function watchChanges(apiKey, compileToJs) {
     const configData = fce.readJsonSync(configFile);
 
     if (JSON.stringify(data) === JSON.stringify(configData)) {
-        console.log('No changes in schema was found');
-        return; // no changes were detected
+        return;
     }
 
-    console.log(CLI_GREEN, 'Changes detected');
+    loader.stop();
+    loader.clear();
+    console.log(CLI_GREEN, 'Detected changes in content!');
 
     fce.writeJsonSync(configFile, data);
     await generateSDK(apiKey, compileToJs);
+    loader.start();
 }
 
 
 async function main() {
 
-    const envfiles = [
-        '.env',
-        '.env.local',
-        '.env.development',
-        'env.local',
-        'env.development'
-    ];
+    const envfiles = ['.env', '.env.local', '.env.development', 'env.local', 'env.development'];
     const envName = "FLOTIQ_API_KEY";
     let apiKey = ''
     for (const file of envfiles) {
@@ -196,14 +191,12 @@ async function main() {
     }
 
     if (!apiKey) {
-        const answers = await inquirer.prompt([
-            {
-                type: 'input',
-                name: 'apiKey',
-                message: 'Please enter your Flotiq API key:',
-                validate: input => !!input || 'API key cannot be empty.'
-            }
-        ]);
+        const answers = await inquirer.prompt([{
+            type: 'input',
+            name: 'apiKey',
+            message: 'Please enter your Flotiq API key:',
+            validate: input => !!input || 'API key cannot be empty.'
+        }]);
 
         apiKey = answers.apiKey;
 
