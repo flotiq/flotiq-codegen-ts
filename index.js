@@ -14,7 +14,7 @@ const loading = require('loading-cli');
 
 const compileToJsFlag = "compiled-js";
 const watchFlag = "watch";
-const watchDuration = 15000;
+const watchInterval = 10000;
 
 const CLI_GREEN = "\x1b[32m%s\x1b[0m";
 const CLI_BLUE = "\x1b[36m%s\x1b[0m";
@@ -138,14 +138,15 @@ async function makeRequest(apiKey, orderBy) {
 
         return response.data;
     } catch (error) {
+        loader.stop();
+        loader.clear();
         console.error('An error occurred in listening for changes. Details: ', error.response.data);
         process.exit(1);
     }
 }
 
 async function watchChanges(apiKey, compileToJs) {
-    loader.start();
-    const configFile =  path.join(__dirname,'/src/codegen-ts-watch-config.json');
+    const configFile = path.join(__dirname, '/src/codegen-ts-watch-config.json');
     const data = await checkForChanges(apiKey);
     if (!fce.existsSync(configFile)) {
         fce.createFileSync(configFile);
@@ -159,17 +160,15 @@ async function watchChanges(apiKey, compileToJs) {
     }
 
     loader.stop();
-    loader.clear();
+    loader.succeed('Detected changes in content!')
     console.log(CLI_GREEN, 'Detected changes in content!');
 
     fce.writeJsonSync(configFile, data);
     await generateSDK(apiKey, compileToJs);
-    loader.start();
 }
 
 
 async function main() {
-
     const envfiles = ['.env', '.env.local', '.env.development', 'env.local', 'env.development'];
     const envName = "FLOTIQ_API_KEY";
     let apiKey = ''
@@ -211,13 +210,25 @@ async function main() {
         return;
     }
 
+    loader.start();
     await watchChanges(apiKey, compileToJs);
     setInterval(
         await watchChanges,
-        watchDuration,
+        watchInterval,
         apiKey,
         compileToJs
     );
 }
+
+/**
+ *  SIGINT (ctrl + c) handler
+ *  we have to stop the handler, otherwise it causes disappear of console cursor
+ */
+process.on('SIGINT', function () {
+    loader.stop();
+    loader.clear();
+    console.log(colorYellow("Application terminated !"));
+    process.exit(0);
+});
 
 main();

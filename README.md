@@ -82,7 +82,7 @@ and `--compiled-js`
 npx flotiq-codegen-ts generate --watch --compiled-js
 ```
 
-Now, `flotiq-codegen-ts` will check for changes in your Flotiq content every 15 seconds. If changes are detected, it will
+Now, `flotiq-codegen-ts` will check for changes in your Flotiq content every 10 seconds. If changes are detected, it will
 automatically regenerate your SDK to reflect the updates.
 
 ## Developing
