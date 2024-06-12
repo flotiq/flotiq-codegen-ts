@@ -165,6 +165,7 @@ async function watchChanges(apiKey, compileToJs) {
 
     fce.writeJsonSync(configFile, data);
     await generateSDK(apiKey, compileToJs);
+    loader.start();
 }
 
 
