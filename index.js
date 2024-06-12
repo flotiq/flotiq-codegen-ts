@@ -149,7 +149,7 @@ async function watchChanges(apiKey, compileToJs) {
     const data = await checkForChanges(apiKey);
     if (!fce.existsSync(configFile)) {
         fce.createFileSync(configFile);
-        fce.writeJsonSync(configFile, {});
+        fce.writeJsonSync(configFile, data);
     }
 
     const configData = fce.readJsonSync(configFile);
