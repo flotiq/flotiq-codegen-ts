@@ -145,7 +145,7 @@ async function makeRequest(apiKey, orderBy) {
 
 async function watchChanges(apiKey, compileToJs) {
     loader.start();
-    const configFile = './src/codegen-ts-watch-config.json';
+    const configFile =  path.join(__dirname,'/src/codegen-ts-watch-config.json');
     const data = await checkForChanges(apiKey);
     if (!fce.existsSync(configFile)) {
         fce.createFileSync(configFile);
