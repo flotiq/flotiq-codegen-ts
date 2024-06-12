@@ -1,3 +1,4 @@
 node_modules
 flotiqApi
 flotiqApiBuildJs
+src/codegen-ts-watch-config.json
