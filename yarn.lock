@@ -232,6 +232,11 @@ color-name@~1.1.4:
   resolved "https://registry.npmjs.org/color-name/-/color-name-1.1.4.tgz"
   integrity sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==
 
+colors-cli@^1.0.26:
+  version "1.0.33"
+  resolved "https://registry.npmjs.org/colors-cli/-/colors-cli-1.0.33.tgz"
+  integrity sha512-PWGsmoJFdOB0t+BeHgmtuoRZUQucOLl5ii81NBzOOGVxlgE04muFNHlR5j8i8MKbOPELBl3243AI6lGBTj5ICQ==
+
 combined-stream@^1.0.8:
   version "1.0.8"
   resolved "https://registry.npmjs.org/combined-stream/-/combined-stream-1.0.8.tgz"
@@ -513,6 +518,13 @@ jsonfile@^6.0.1:
     universalify "^2.0.0"
   optionalDependencies:
     graceful-fs "^4.1.6"
+
+loading-cli@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.npmjs.org/loading-cli/-/loading-cli-1.1.2.tgz"
+  integrity sha512-M1ntfXHpdGoQxfaqKBOQPwSrTr9EIoTgj664Q9UVSbSnJvAFdribo+Ij//1jvACgrGHaTvfKoD9PG3NOxGj44g==
+  dependencies:
+    colors-cli "^1.0.26"
 
 locate-path@^5.0.0:
   version "5.0.0"
