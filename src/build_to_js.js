@@ -10,7 +10,11 @@ const {execSync} = require('child_process');
 const buildToJs = (tmpSDKPath) => {
     const sdkCopyPath = tmpSDKPath.replace('flotiqApi', 'flotiqApi_copy');
     fce.moveSync(tmpSDKPath, sdkCopyPath);
-
+    execSync('npm install', {cwd: sdkCopyPath}, (err, stdout) => {
+        if(err) {
+            return console.error(err.message);
+        }
+    });
     execSync(`tsc -p ${sdkCopyPath}`, {stdio: 'inherit'});
     fce.moveSync(`${sdkCopyPath}/dist/`, `${tmpSDKPath}`, {overwrite: true});
 }
