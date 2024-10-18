@@ -15,8 +15,8 @@ const buildToJs = (tmpSDKPath) => {
             return console.error(err.message);
         }
     });
-    execSync(`tsc -p ${sdkCopyPath}`, {stdio: 'inherit'});
-    fce.moveSync(`${sdkCopyPath}/dist/`, `${tmpSDKPath}`, {overwrite: true});
+    execSync(`npm run build`, {stdio: 'inherit', cwd: sdkCopyPath});
+    fce.moveSync(`${sdkCopyPath}`, `${tmpSDKPath}`, {overwrite: true});
 }
 
 module.exports = buildToJs;
