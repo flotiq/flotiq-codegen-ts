@@ -16,7 +16,10 @@ const buildToJs = (tmpSDKPath) => {
         }
     });
     execSync(`npm run build`, {stdio: 'inherit', cwd: sdkCopyPath});
-    fce.moveSync(`${sdkCopyPath}`, `${tmpSDKPath}`, {overwrite: true});
+    //Move /dist
+    //Move /package.json
+    fce.moveSync(`${sdkCopyPath}/dist`, `${tmpSDKPath}/dist`, {overwrite: true});
+    fce.moveSync(`${sdkCopyPath}/package.json`, `${tmpSDKPath}/package.json`, {overwrite: true});
 }
 
 module.exports = buildToJs;
