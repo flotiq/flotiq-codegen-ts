@@ -80,8 +80,7 @@ async function generateSDK(apiKey, compileToJs) {
         console.log('Generating client from schema...');
 
         // Generate command
-        // const lambdaUrl = `https://0c8judkapg.execute-api.us-east-1.amazonaws.com/default/codegen-ts?token=${apiKey}`
-        const lambdaUrl = `https://9krp7y1dn6.execute-api.us-east-1.amazonaws.com/default/codegen-ts-staging?token=${apiKey}`
+        const lambdaUrl = `https://0c8judkapg.execute-api.us-east-1.amazonaws.com/default/codegen-ts?token=${apiKey}`;
         const zip = new admZip(await lambdaInvoke(lambdaUrl));
         const tmpPath = getWorkingPath();
         const tmpSDKPath = `${tmpPath}/flotiqApi`;
