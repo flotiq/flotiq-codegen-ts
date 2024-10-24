@@ -15,8 +15,12 @@ const buildToJs = (tmpSDKPath) => {
             return console.error(err.message);
         }
     });
-    execSync(`tsc -p ${sdkCopyPath}`, {stdio: 'inherit'});
-    fce.moveSync(`${sdkCopyPath}/dist/`, `${tmpSDKPath}`, {overwrite: true});
+    execSync(`npm run build`, {stdio: 'inherit', cwd: sdkCopyPath});
+    // Move main files (dist, package.json, README.nd) to the result dir
+    // Don't move typescript sources to the result dir
+    fce.moveSync(`${sdkCopyPath}/dist`, `${tmpSDKPath}/dist`, {overwrite: true});
+    fce.moveSync(`${sdkCopyPath}/package.json`, `${tmpSDKPath}/package.json`, {overwrite: true});
+    fce.moveSync(`${sdkCopyPath}/README.md`, `${tmpSDKPath}/README.md`, {overwrite: true});
 }
 
 module.exports = buildToJs;
