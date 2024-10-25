@@ -12,7 +12,7 @@ const dotenvFlow = require('dotenv-flow');
 const envName = "FLOTIQ_API_KEY";
 
 const compileToJsFlag = "compiled-js";
-const apiKeyFlag = "api-key";
+const apiKeyFlag = "flotiq-api-key";
 const watchFlag = "watch";
 const watchInterval = 10000;
 
@@ -98,9 +98,10 @@ async function main(argv) {
                 //using API key from file
                 apiKey = localEnv[envName];
             }
-            return;
         }
+    }
 
+    if(!apiKey){
         const answers = await inquirer.prompt([{
             type: 'input',
             name: 'apiKey',
