@@ -59,7 +59,7 @@ async function generateSDK(apiKey, compileToJs) {
 }
 
 async function watchChanges(apiKey, compileToJs) {
-    const configFile = path.join(__dirname, '/src/codegen-ts-watch-config.json');
+    const configFile = path.join(__dirname, '../src/codegen-ts-watch-config.json');
     const data = await checkForChanges(apiKey);
     if (!fce.existsSync(configFile)) {
         fce.createFileSync(configFile);
