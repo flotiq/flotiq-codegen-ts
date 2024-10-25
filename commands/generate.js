@@ -3,11 +3,16 @@ const buildToJs = require("../src/build_to_js");
 const cleanDuplicateImport = require("../src/clean_duplicate_import");
 const fs = require('fs');
 const fce = require('fs-extra');
-const {checkForChanges, getWorkingPath, lambdaInvoke, loader}  = require("../src/helpers");
+const {checkForChanges, getWorkingPath, lambdaInvoke, loader, confirm} = require("../src/helpers");
 const admZip = require('adm-zip');
 const path = require('path');
+const {options} = require("axios");
+const dotenvFlow = require('dotenv-flow');
+
+const envName = "FLOTIQ_API_KEY";
 
 const compileToJsFlag = "compiled-js";
+const apiKeyFlag = "api-key";
 const watchFlag = "watch";
 const watchInterval = 10000;
 
@@ -77,28 +82,25 @@ async function watchChanges(apiKey, compileToJs) {
 }
 
 async function main(argv) {
-    const envfiles = ['.env', '.env.local', '.env.development', 'env.local', 'env.development'];
-    const envName = "FLOTIQ_API_KEY";
-    let apiKey = ''
-    for (const file of envfiles) {
-        const filepath = path.join(process.cwd(), file)
 
-        if (fs.existsSync(filepath)) {
-            dotenv.config({path: filepath})
-
-            if (process.env[envName]) {
-
-                let query = confirm(`${envName} found in '${file}' file. \n  Do you want to use API key from ${file}?`)
-                if (query) {
-                    //using API key from file
-                    apiKey = process.env[envName];
-                    break;
-                }
-            }
-        }
-    }
+    let apiKey = argv[apiKeyFlag] || process.env[envName];
 
     if (!apiKey) {
+        const localEnv = dotenvFlow.parse(
+            dotenvFlow.listFiles({
+                path: process.cwd(),
+            })
+        );
+
+        if (localEnv[envName]) {
+            let query = await confirm(`${envName} found \n  Do you want to use API key from env file ?`)
+            if (query) {
+                //using API key from file
+                apiKey = localEnv[envName];
+            }
+            return;
+        }
+
         const answers = await inquirer.prompt([{
             type: 'input',
             name: 'apiKey',
@@ -107,7 +109,6 @@ async function main(argv) {
         }]);
 
         apiKey = answers.apiKey;
-
     }
 
     const compileToJs = argv[compileToJsFlag];
@@ -133,6 +134,13 @@ module.exports = {
     describe: 'Generate api integration for your Flotiq project',
     builder: (yargs) => {
         return yargs
+            .option(apiKeyFlag, {
+                description: "Flotiq API key",
+                alias: "",
+                type: "string",
+                default: "",
+                demandOption: false,
+            })
             .option(watchFlag, {
                 description: "Listen for changes in Flotiq Api Schema, and regenerate SDK after detected change",
                 alias: "",

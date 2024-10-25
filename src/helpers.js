@@ -3,6 +3,7 @@ const os = require('os');
 const path = require('path');
 const loading = require('loading-cli');
 const axios = require('axios');
+const inquirer = require('inquirer');
 
 const colorYellow = (str) => {
     return `\x1b[33m${str}\x1b[0m`;
@@ -41,7 +42,6 @@ async function lambdaInvoke(url) {
         const response = await axios.get(url, {responseType: 'arraybuffer'})
         return Buffer.from(response.data, 'base64');
     } catch (error) {
-        console.log(error)
         if (error.response) {
             const decoder = new TextDecoder('utf-8')
             const errorData = JSON.parse(decoder.decode(error.response.data))

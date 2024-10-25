@@ -21,6 +21,7 @@
     "adm-zip": "^0.5.12",
     "axios": "^1.6.8",
     "dotenv": "^16.4.5",
+    "dotenv-flow": "^4.1.0",
     "fs-extra": "^11.2.0",
     "inquirer": "^8.2.0",
     "loading-cli": "^1.1.2",

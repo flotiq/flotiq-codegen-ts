@@ -2,7 +2,6 @@
 
 const {colorYellow, loader} = require('./src/helpers')
 
-
 require('yargs')
     .commandDir('commands')  // Automatyczne ładowanie komend z katalogu 'commands'
     .usage("Use flotiq-codegen-ts generates typescript Fetch API integration for your Flotiq project.")
