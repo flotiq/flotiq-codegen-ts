@@ -6,7 +6,6 @@ const fce = require('fs-extra');
 const {checkForChanges, getWorkingPath, lambdaInvoke, loader, confirm} = require("../src/helpers");
 const admZip = require('adm-zip');
 const path = require('path');
-const {options} = require("axios");
 const dotenvFlow = require('dotenv-flow');
 
 const envName = "FLOTIQ_API_KEY";
@@ -14,53 +13,56 @@ const envName = "FLOTIQ_API_KEY";
 const compileToJsFlag = "compiled-js";
 const apiKeyFlag = "flotiq-api-key";
 const watchFlag = "watch";
+const silentFlag = "silent";
 const watchInterval = 10000;
 
 const CLI_GREEN = "\x1b[32m%s\x1b[0m";
 const CLI_BLUE = "\x1b[36m%s\x1b[0m";
 
-async function generateSDK(apiKey, compileToJs) {
+const LAMBDA_URL = `https://0c8judkapg.execute-api.us-east-1.amazonaws.com/default/codegen-ts`;
+
+async function generateSDK(apiKey, compileToJs, logger) {
     try {
-        console.log('Generating client from schema...');
+        logger.log('Generating client from schema...');
 
         // Generate command
-        const lambdaUrl = `https://0c8judkapg.execute-api.us-east-1.amazonaws.com/default/codegen-ts?token=${apiKey}`;
-        const zip = new admZip(await lambdaInvoke(lambdaUrl));
+        const lambdaUrl = `${LAMBDA_URL}?token=${apiKey}`;
+        const zip = new admZip(await lambdaInvoke(lambdaUrl, logger));
         const tmpPath = getWorkingPath();
         const tmpSDKPath = `${tmpPath}/flotiqApi`;
         const outputPath = path.join(process.cwd(), 'flotiqApi');
 
-        console.log(`Extracting SDK client to tmp dir '${tmpPath}'...`);
+        logger.log(`Extracting SDK client to tmp dir '${tmpPath}'...`);
         zip.extractAllTo(tmpSDKPath);
         cleanDuplicateImport(tmpSDKPath);
 
         if (compileToJs) {
-            console.log('Compiling to JavaScript...');
-            buildToJs(tmpSDKPath);
+            logger.log('Compiling to JavaScript...');
+            buildToJs(tmpSDKPath, logger);
         }
 
         if (fs.existsSync(outputPath)) {
-            console.log(`Found existing SDK in '${outputPath}' - cleaning up...`);
+            logger.log(`Found existing SDK in '${outputPath}' - cleaning up...`);
             fce.removeSync(outputPath);
         }
 
-        console.log(`Moving SDK to '${outputPath}'...`);
+        logger.log(`Moving SDK to '${outputPath}'...`);
         fce.moveSync(tmpSDKPath, outputPath);
         fce.removeSync(tmpPath);
 
-        console.log(CLI_GREEN, 'Client generated successfully!');
-        console.log(CLI_GREEN, 'You can start using your Flotiq SDK');
-        console.log(CLI_BLUE, 'Read more: https://github.com/flotiq/flotiq-codegen-ts');
+        logger.log(CLI_GREEN, 'Client generated successfully!');
+        logger.log(CLI_GREEN, 'You can start using your Flotiq SDK');
+        logger.log(CLI_BLUE, 'Read more: https://github.com/flotiq/flotiq-codegen-ts');
 
     } catch (error) {
-        console.error('An error occurred:', error);
+        logger.error('An error occurred:', error);
         process.exit(1);
     }
 }
 
-async function watchChanges(apiKey, compileToJs) {
+async function watchChanges(apiKey, compileToJs, logger) {
     const configFile = path.join(__dirname, '../src/codegen-ts-watch-config.json');
-    const data = await checkForChanges(apiKey);
+    const data = await checkForChanges(apiKey, logger);
     if (!fce.existsSync(configFile)) {
         fce.createFileSync(configFile);
         fce.writeJsonSync(configFile, data);
@@ -74,18 +76,34 @@ async function watchChanges(apiKey, compileToJs) {
 
     loader.stop();
     loader.succeed('Detected changes in content!')
-    console.log(CLI_GREEN, 'Detected changes in content!');
+    logger.log(CLI_GREEN, 'Detected changes in content!');
 
     fce.writeJsonSync(configFile, data);
-    await generateSDK(apiKey, compileToJs);
+    await generateSDK(apiKey, compileToJs, logger);
     loader.start();
 }
 
+const silentLogger = {
+    log: () => { },
+    error: () => { },
+    warn: () => { },
+    info: () => { },
+    debug: () => { },
+};
+
+/**
+ * Run generation command
+ * @param {{flotiqApiKey: string, watch: boolean, silent: boolean, compiledJs: boolean}} argv
+ * @returns 
+ */
 async function main(argv) {
+    let apiKey = argv.flotiqApiKey || process.env[envName];
+    const silent = argv.silent;
+    const logger = silent ? silentLogger : console;
+    const compileToJs = argv.compiledJs;
+    const watch = argv.watch;
 
-    let apiKey = argv[apiKeyFlag] || process.env[envName];
-
-    if (!apiKey) {
+    if (!apiKey && !silent) {
         const localEnv = dotenvFlow.parse(
             dotenvFlow.listFiles({
                 path: process.cwd(),
@@ -101,7 +119,7 @@ async function main(argv) {
         }
     }
 
-    if(!apiKey){
+    if(!apiKey && !silent) {
         const answers = await inquirer.prompt([{
             type: 'input',
             name: 'apiKey',
@@ -112,18 +130,17 @@ async function main(argv) {
         apiKey = answers.apiKey;
     }
 
-    const compileToJs = argv[compileToJsFlag];
-    const watch = argv[watchFlag];
+    
 
     if (!watch) {
-        await generateSDK(apiKey, compileToJs);
+        await generateSDK(apiKey, compileToJs, logger);
         return;
     }
 
     loader.start();
-    await watchChanges(apiKey, compileToJs);
+    await watchChanges(apiKey, compileToJs, logger);
     setInterval(
-        await watchChanges,
+        () => watchChanges(apiKey, compileToJs, logger),
         watchInterval,
         apiKey,
         compileToJs
@@ -144,14 +161,21 @@ module.exports = {
             })
             .option(watchFlag, {
                 description: "Listen for changes in Flotiq Api Schema, and regenerate SDK after detected change",
-                alias: "",
+                alias: "w",
+                type: "boolean",
+                default: false,
+                demandOption: false,
+            })
+            .option(silentFlag, {
+                description: "Suppress console output. Assumes no for all prompts.",
+                alias: "s",
                 type: "boolean",
                 default: false,
                 demandOption: false,
             })
             .option(compileToJsFlag, {
                 description: "Generates Fetch API integration compiled to JavaScript",
-                alias: "",
+                alias: "c",
                 type: "boolean",
                 default: false,
                 demandOption: false,

@@ -15,7 +15,7 @@ const loader = loading({
     text: colorYellow("Watching for changes ..."), color: "yellow"
 });
 
-async function makeRequest(apiKey, orderBy) {
+async function makeRequest(apiKey, orderBy, logger) {
     const FILTERS_URL = "https://api.flotiq.com/api/v1/internal/contenttype"
 
     try {
@@ -31,12 +31,12 @@ async function makeRequest(apiKey, orderBy) {
     } catch (error) {
         loader.stop();
         loader.clear();
-        console.error('An error occurred in listening for changes. Details: ', error.response.data);
+        logger.error('An error occurred in listening for changes. Details: ', error.response.data);
         process.exit(1);
     }
 }
 
-async function lambdaInvoke(url) {
+async function lambdaInvoke(url, logger) {
 
     try {
         const response = await axios.get(url, {responseType: 'arraybuffer'})
@@ -46,10 +46,10 @@ async function lambdaInvoke(url) {
             const decoder = new TextDecoder('utf-8')
             const errorData = JSON.parse(decoder.decode(error.response.data))
 
-            console.error('Error fetching data: ', errorData.message);
+            logger.error('Error fetching data: ', errorData.message);
             process.exit(1);
         } else {
-            console.error('Error fetching data: unknown error');
+            logger.error('Error fetching data: unknown error');
             process.exit(1);
         }
     }
@@ -62,9 +62,9 @@ async function confirm(msg) {
     return response.confirmation;
 }
 
-async function checkForChanges(apiKey) {
-    const updatedAtResult = await makeRequest(apiKey, 'updatedAt');
-    const createdAtResult = await makeRequest(apiKey, 'createdAt');
+async function checkForChanges(apiKey, logger) {
+    const updatedAtResult = await makeRequest(apiKey, 'updatedAt', logger);
+    const createdAtResult = await makeRequest(apiKey, 'createdAt', logger);
 
     return {
         updatedAt: updatedAtResult.data[0].updatedAt, createdAt: createdAtResult.data[0].createdAt,

@@ -7,7 +7,7 @@ require('yargs')
     .usage("Use flotiq-codegen-ts generates typescript Fetch API integration for your Flotiq project.")
     .help()
     .alias("help", "h")
-    .argv;
+    .parse();
 
 /**
  *  SIGINT (ctrl + c) handler
