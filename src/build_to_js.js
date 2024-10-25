@@ -7,12 +7,12 @@ const {execSync} = require('child_process');
  * Move back compiled files to standard flotiqApi dir
  * @param tmpSDKPath
  */
-const buildToJs = (tmpSDKPath) => {
+const buildToJs = (tmpSDKPath, logger) => {
     const sdkCopyPath = tmpSDKPath.replace('flotiqApi', 'flotiqApi_copy');
     fce.moveSync(tmpSDKPath, sdkCopyPath);
     execSync('npm install', {cwd: sdkCopyPath}, (err, stdout) => {
         if(err) {
-            return console.error(err.message);
+            return logger.error(err.message);
         }
     });
     execSync(`npm run build`, {stdio: 'inherit', cwd: sdkCopyPath});

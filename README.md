@@ -16,7 +16,7 @@ Go to this [JSFiddle](https://jsfiddle.net/o5rafnpw/1/) to see a (limited) demo.
 
 ## Quickstart
 
-```
+```bash
 npx flotiq-codegen-ts generate
 ```
 
@@ -39,9 +39,9 @@ const eventList = await flotiq.EventAPI.list({limit: 100});
 
 ## Usage in JS project
 
-If you wish to use `flotiqApi` in JS project you can use `flotiq-codegen-ts` with `--compiled-js` flag
+If you wish to use `flotiqApi` in JS project you can use `flotiq-codegen-ts` with `--compiled-js`/`-c` flag
 
-```
+```bash
 npx flotiq-codegen-ts generate --compiled-js
 ```
 
@@ -65,25 +65,45 @@ The `flotiq-codegen-ts` tool offers a feature to continuously monitor changes in
 automatically regenerates the SDK whenever changes are detected, ensuring that developers always have the most
 up-to-date data models in their IDE without manual intervention.
 
-The `--watch` option for `flotiq-codegen-ts` ensures your SDK stays up-to-date by automatically monitoring and regenerating
+The `--watch`/`-w` option for `flotiq-codegen-ts` ensures your SDK stays up-to-date by automatically monitoring and regenerating
 based on content changes.
 
-If you want to see changes made in Flotiq by your content editor in your IDE, use `flotiq-codegen-ts` with `--watch`
+If you want to see changes made in Flotiq by your content editor in your IDE, use `flotiq-codegen-ts` with `--watch`/`-w`
 flag
 
-```
+```bash
 npx flotiq-codegen-ts generate --watch
 ```
 
-or, if you want your SDK to be directly compiled to JavaScript use `flotiq-codegen-ts` with flags  `--watch`
-and `--compiled-js`
+or, if you want your SDK to be directly compiled to JavaScript use `flotiq-codegen-ts` with flags  `--watch`/`-w`
+and `--compiled-js`/`-c`
 
-```
+```bash
 npx flotiq-codegen-ts generate --watch --compiled-js
 ```
 
 Now, `flotiq-codegen-ts` will check for changes in your Flotiq content every 10 seconds. If changes are detected, it will
 automatically regenerate your SDK to reflect the updates.
+
+## Surpressing output messages
+
+If you don't want to receive output messages, pass `--silent`/`-s` option to limit number of logs. This option assumes, that the generator cannot read api key from `.env.*` file and will not ask for key in the console.
+
+```bash
+npx flotiq-codegen-ts generate --silent
+```
+
+This is especially useful when you are using generator with other automation tools or you are running generate function by hand.
+
+## Node.js api
+
+You can use command handler in your scripts by importing command handler
+
+```javascript
+const {handler} = require('flotiq-codegen-ts/commands/generate');
+
+await handler({flotiqApiKey: 'test-ro-key', watch: false, silent: false, compiledJs: false});
+```
 
 ## Developing
 
