@@ -14,6 +14,7 @@ const compileToJsFlag = "compiled-js";
 const apiKeyFlag = "flotiq-api-key";
 const watchFlag = "watch";
 const silentFlag = "silent";
+const outputPathFlag = 'output'
 const watchInterval = 10000;
 
 const CLI_GREEN = "\x1b[32m%s\x1b[0m";
@@ -21,7 +22,7 @@ const CLI_BLUE = "\x1b[36m%s\x1b[0m";
 
 const LAMBDA_URL = `https://0c8judkapg.execute-api.us-east-1.amazonaws.com/default/codegen-ts`;
 
-async function generateSDK(apiKey, compileToJs, logger) {
+async function generateSDK(apiKey, compileToJs, logger, outputPath) {
     try {
         logger.log('Generating client from schema...');
 
@@ -30,7 +31,6 @@ async function generateSDK(apiKey, compileToJs, logger) {
         const zip = new admZip(await lambdaInvoke(lambdaUrl, logger));
         const tmpPath = getWorkingPath();
         const tmpSDKPath = `${tmpPath}/flotiqApi`;
-        const outputPath = path.join(process.cwd(), 'flotiqApi');
 
         logger.log(`Extracting SDK client to tmp dir '${tmpPath}'...`);
         zip.extractAllTo(tmpSDKPath);
@@ -60,7 +60,7 @@ async function generateSDK(apiKey, compileToJs, logger) {
     }
 }
 
-async function watchChanges(apiKey, compileToJs, logger) {
+async function watchChanges(apiKey, compileToJs, logger, outputPath) {
     const configFile = path.join(__dirname, '../src/codegen-ts-watch-config.json');
     const data = await checkForChanges(apiKey, logger);
     if (!fce.existsSync(configFile)) {
@@ -79,7 +79,7 @@ async function watchChanges(apiKey, compileToJs, logger) {
     logger.log(CLI_GREEN, 'Detected changes in content!');
 
     fce.writeJsonSync(configFile, data);
-    await generateSDK(apiKey, compileToJs, logger);
+    await generateSDK(apiKey, compileToJs, logger, outputPath);
     loader.start();
 }
 
@@ -93,7 +93,7 @@ const silentLogger = {
 
 /**
  * Run generation command
- * @param {{flotiqApiKey: string, watch: boolean, silent: boolean, compiledJs: boolean}} argv
+ * @param {{flotiqApiKey: string, watch: boolean, silent: boolean, compiledJs: boolean, outputPath: string}} argv
  * @returns 
  */
 async function main(argv) {
@@ -102,6 +102,7 @@ async function main(argv) {
     const logger = silent ? silentLogger : console;
     const compileToJs = argv.compiledJs;
     const watch = argv.watch;
+    const outputPath = argv.output;
 
     if (!apiKey && !silent) {
         const localEnv = dotenvFlow.parse(
@@ -133,12 +134,12 @@ async function main(argv) {
     
 
     if (!watch) {
-        await generateSDK(apiKey, compileToJs, logger);
+        await generateSDK(apiKey, compileToJs, logger, outputPath);
         return;
     }
 
     loader.start();
-    await watchChanges(apiKey, compileToJs, logger);
+    await watchChanges(apiKey, compileToJs, logger, outputPath);
     setInterval(
         () => watchChanges(apiKey, compileToJs, logger),
         watchInterval,
@@ -179,6 +180,14 @@ module.exports = {
                 type: "boolean",
                 default: false,
                 demandOption: false,
+            })
+            .option(outputPathFlag, {
+                description: "Path to which API SDK should be generated",
+                alias: "o",
+                type: "string",
+                default: './flotiqApi',
+                demandOption: false,
+                coerce: (outputPath) => path.resolve(outputPath)
             });
     },
     handler: main,
