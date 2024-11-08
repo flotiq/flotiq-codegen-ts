@@ -95,6 +95,18 @@ npx flotiq-codegen-ts generate --silent
 
 This is especially useful when you are using generator with other automation tools or you are running generate function by hand.
 
+## Changing SDK output path
+
+By default, the SDK is generated in the `flotiqApi` folder in your working directory.
+
+If you want to change the path for the generated SDK, use the `--output`/`-o` option with your chosen path.
+
+```bash
+npx flotiq-codegen-ts generate --output ./lib/flotiqApi
+```
+
+In the example above, the SDK will be placed in the `flotiqApi` folder within `lib` in your working directory.
+
 ## Node.js api
 
 You can use command handler in your scripts by importing command handler
