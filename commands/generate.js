@@ -20,7 +20,7 @@ const watchInterval = 10000;
 const CLI_GREEN = "\x1b[32m%s\x1b[0m";
 const CLI_BLUE = "\x1b[36m%s\x1b[0m";
 
-const LAMBDA_URL = `https://0c8judkapg.execute-api.us-east-1.amazonaws.com/default/codegen-ts`;
+const LAMBDA_URL = `https://qerbf4kxhk.execute-api.us-east-1.amazonaws.com/default/codegen-ts`;
 
 async function generateSDK(apiKey, compileToJs, logger, outputPath) {
     try {
