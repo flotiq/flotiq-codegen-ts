@@ -141,7 +141,7 @@ async function main(argv) {
     loader.start();
     await watchChanges(apiKey, compileToJs, logger, outputPath);
     setInterval(
-        () => watchChanges(apiKey, compileToJs, logger),
+        () => watchChanges(apiKey, compileToJs, logger, outputPath),
         watchInterval,
         apiKey,
         compileToJs
